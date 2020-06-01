@@ -4,155 +4,174 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-class maze_solver:
+def convert_to_array(path_to_maze):
+    """
+    Converts image of maze (wall thickness 1 pixel) to array.
+    """
+    initial_maze = cv2.imread(path_to_maze, 0)
+    maze_reverted = cv2.bitwise_not(initial_maze)
+    maze = maze_reverted / 255.0
 
-    def __init__(self, path_to_maze):
-        self.path_to_maze = path_to_maze
+    return maze
 
-    def convert_to_array(self):
+def find_in_and_out(maze):
+    """
+    Finds start and exit of the maze.
+    """
+    nr_of_lines = len(maze)
+    coords = []
 
-        initial_maze = cv2.imread(self.path_to_maze, 0)
-        maze_reverted = cv2.bitwise_not(initial_maze)
-        self.maze = maze_reverted / 255.0
-
-        return self.maze
-
-    def find_in_and_out(self):
-
-        nr_of_lines = len(self.maze)
-        self.coords = []
-
-        for y in range(nr_of_lines):
-            if y == 0 or y == nr_of_lines - 1:
-                try:
-                    x = list(self.maze[y]).index(0)
-                    coord = [int(x), int(y)]
-                    self.coords.append(coord)
-                except:
-                    pass
+    for y in range(nr_of_lines):
+        if y == 0 or y == nr_of_lines - 1:
+            try:
+                x = list(maze[y]).index(0)
+                coord = [int(x), int(y)]
+                coords.append(coord)
+            except:
+                pass
+        else:
+            if maze[y][0] == 0:
+                x = maze[y][0]
+                coord = [int(x), int(y)]
+                coords.append(coord)
+            elif maze[y][-1] == 0:
+                x = len(maze) - 1
+                coord = [int(x), int(y)]
+                coords.append(coord)
             else:
-                if self.maze[y][0] == 0:
-                    x = self.maze[y][0]
-                    coord = [int(x), int(y)]
-                    self.coords.append(coord)
-                elif self.maze[y][-1] == 0:
-                    x = len(self.maze) - 1
-                    coord = [int(x), int(y)]
-                    self.coords.append(coord)
-                else:
-                    pass
+                pass
 
-        self.start = self.coords[0]
-        self.end = self.coords[-1]
+    start = coords[0]
+    end = coords[-1]
 
-    def open_points(self, position, open, closed):
+    return start, end
 
-        moves = np.array([[0, 1], [0, -1], [1, 0], [-1, 0]])
-        neighbours = (moves + position).tolist()
+def open_points(position, open, closed, maze, start):
+    """
+    Updates possible and potential points to visit.
+    """
+    moves = np.array([[0, 1], [0, -1], [1, 0], [-1, 0]])
+    neighbours = (moves + position).tolist()
 
-        for i in range(len(neighbours)):
-            x = int(neighbours[i][0])
-            y = int(neighbours[i][1])
-            if ((any(neighbours[i]) > 0) == True and self.maze[y][x] == 0 and tuple(neighbours[i]) not in closed.keys()) or neighbours[i] == self.start:
-                open.update({tuple(neighbours[i]) : []})
+    for i in range(len(neighbours)):
+        x = int(neighbours[i][0])
+        y = int(neighbours[i][1])
+        if ((any(neighbours[i]) > 0) == True and maze[y][x] == 0 and tuple(neighbours[i]) not in closed.keys()) or neighbours[i] == start:
+            open.update({tuple(neighbours[i]) : []})
 
-    def find_nodes(self, graph):
+    return open
 
-        moves = np.array([[0, 1], [0, -1], [1, 0], [-1, 0]])
-        nodes = []
-        distances = {}
+def find_nodes(graph):
+    """
+    Finds nodes (crossings), points where there is possibility to go in different directions. For future purpose.
+    """
+    moves = np.array([[0, 1], [0, -1], [1, 0], [-1, 0]])
+    nodes = []
+    distances = {}
 
-        for point in graph:
-            neighbours = (moves + point).tolist()
-            step = 0
-            for n in neighbours:
-                if n in graph:
-                    step += 1
-            if step > 2:
-                nodes.append(point)
+    for point in graph:
+        neighbours = (moves + point).tolist()
+        step = 0
+        for n in neighbours:
+            if n in graph:
+                step += 1
+        if step > 2:
+            nodes.append(point)
 
-        return nodes
+    return nodes
 
-    @staticmethod
-    def calculate_distance(dictionary, start, end):
+def calculate_distance(dictionary, start, end):
+    """
+    Calculates and updates distances to end of points in dictionary (open points).
+    """
+    for point, dist in dictionary.items():
+        dist = np.linalg.norm(np.asarray(end) - np.asarray(point))
+        dictionary.update({tuple(point): dist})
 
-        for point, dist in dictionary.items():
-            dist = np.linalg.norm(np.asarray(end) - np.asarray(point))
-            dictionary.update({tuple(point): dist})
+    return dictionary
 
-    @staticmethod
-    def lowest_dist(dictionary):
+def lowest_dist(dictionary):
+    """
+    Chooses point with lowest distance to end.
+    """
+    return min(dictionary.keys(), key=(lambda point: dictionary[point]))
 
-        return min(dictionary.keys(), key=(lambda point: dictionary[point]))
+def corridor_points(maze):
+    """
+    Maximum number of points possible to visit (not walls).
+    Just to estimate in what extent the maze was evaluated to find exit.
+    """
+    n_0 = 0
+    for x in maze:
+        n_0 = list(x).count(0) + n_0
 
-    def corridor_points(self):
-        n_0 = 0
-        for x in self.maze:
-            n_0 = list(x).count(0) + n_0
+    return n_0
 
-        return n_0
+def show_graph(graph, maze_length, open):
+    """
+    Shows graph and path that was made by algorithm to find exit.
+    """
+    fig, ax = plt.subplots()
+    plt.subplots_adjust(left=0.08, top=0.92, bottom=0.08, right=0.75, wspace=0.075, hspace=0.075)
+    plt.axis([0, maze_length, 0, maze_length])
+    ax.xaxis.tick_top()
+    plt.gca().invert_yaxis()
+    ax.spines['left'].set_position(('axes', 0))
+    ax.spines['bottom'].set_position(('axes', 0))
+    for point in graph:
+        #print("Position: ", point)
+        point = np.array(point)
+        x, y = point.T
+        plt.scatter(x, y, c='k', marker='s', s=45)
+        plt.pause(0.0001)
+    plt.show()
 
-    @staticmethod
-    def show_graph(graph, maze_length, open):
 
-        fig, ax = plt.subplots()
-        plt.subplots_adjust(left=0.08, top=0.92, bottom=0.08, right=0.75, wspace=0.075, hspace=0.075)
-        plt.axis([0, maze_length, 0, maze_length])
-        ax.xaxis.tick_top()
-        plt.gca().invert_yaxis()
-        ax.spines['left'].set_position(('axes', 0))
-        ax.spines['bottom'].set_position(('axes', 0))
-        for point in graph:
-            #print("Position: ", point)
-            point = np.array(point)
-            x, y = point.T
-            plt.scatter(x, y, c='k', marker='s', s=45)
-            plt.pause(0.0001)
-        plt.show()
+def possible_routes(graph, input_maze):
+    """
+    All points evaluated by algorithm, with proper path.
+    """
+    updated_maze = np.full((len(input_maze), len(input_maze[0])), 1)
 
-    @staticmethod
-    def possible_routes(graph, input_maze):
+    for point in graph:
+        updated_maze[point[1]][point[0]] = 0
 
-        updated_maze = np.full((len(input_maze), len(input_maze[0])), 1)
+    return updated_maze
 
-        for point in graph:
-            updated_maze[point[1]][point[0]] = 0
+def find_path(path):
+    """
+    Actual function used to find end, combination of above functions.
+    """
+    maze = convert_to_array(path)
+    start, end = find_in_and_out(maze)
 
-        return updated_maze
+    open = {}  # points to be evaluated
+    closed = {}  # points already evaluated
+    graph = [] # points for creating visualization
+    position = start
+    graph.append(list(position))
 
-    def find_path(self):
+    while position != tuple(end):
+        open = open_points(position, open, closed, maze, start)
+        open = calculate_distance(open, start, end)
+        lowd = lowest_dist(open)
+        if lowd not in closed.keys() and position != tuple(end):
+            position = lowd
+            closed.update({position : open[position]})
+            del open[position]
+            graph.append(list(position))
 
-        self.convert_to_array()
-        self.find_in_and_out()
+    n_0 = corridor_points(maze)
+    percentage = round((len(graph)/n_0 * 100), 2)
+    print("Evaluated points:", len(graph))
+    print("Points possible to visit:", n_0)
+    print("Visited {}% of all points.".format(str(percentage)))
 
-        open = {}  # points to be evaluated
-        closed = {}  # points already evaluated
-        graph = [] # points for creating visualization
-        position = self.start
-        graph.append(list(position))
+    updated_maze = possible_routes(graph, maze)
+    nodes = find_nodes(graph)
+    print("Nodes to be evaluated:", nodes)
+    show_graph(graph, len(maze), closed)
 
-        while position != tuple(self.end):
-            self.open_points(position, open, closed)
-            self.calculate_distance(open, self.start, self.end)
-            lowd = self.lowest_dist(open)
-            if lowd not in closed.keys() and position != tuple(self.end):
-                position = lowd
-                closed.update({position : open[position]})
-                del open[position]
-                graph.append(list(position))
-
-        n_0 = self.corridor_points()
-        percentage = round((len(graph)/n_0 * 100), 2)
-        print("Evaluated points:", len(graph))
-        print("Points possible to visit:", n_0)
-        print("Visited {}% of all points.".format(str(percentage)))
-
-        updated_maze = self.possible_routes(graph, self.maze)
-        nodes = self.find_nodes(graph)
-        print("Nodes to be evaluated:", nodes)
-        self.show_graph(graph, len(self.maze), closed)
 
 path = 'mazes/maze1.png'
-
-solve = maze_solver(path)
-solve.find_path()
+find_path(path)
