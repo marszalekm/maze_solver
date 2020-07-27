@@ -11,7 +11,6 @@ def convert_to_array(path_to_maze):
     initial_maze = cv2.imread(path_to_maze, 0)
     maze_reverted = cv2.bitwise_not(initial_maze)
     maze = maze_reverted / 255.0
-
     return maze
 
 def find_in_and_out(maze):
@@ -107,10 +106,27 @@ def corridor_points(maze):
 
     return n_0
 
-def show_graph(graph, maze_length, open):
+def show_maze_path(path, solution):
     """
-    Shows graph and path that was made by algorithm to find exit.
+    Shows maze and path that was made by algorithm to find exit. CV2 version.
     """
+
+    cv2.namedWindow('solution', cv2.WINDOW_NORMAL)
+    cv2.resizeWindow('solution', 500, 500)
+    maze = cv2.imread(path, 0)
+    for point in solution:
+        point.reverse()
+        maze[point[0]][point[1]] = 175
+        cv2.imshow('solution', maze)
+        cv2.waitKey(25)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def show_graph(graph, maze_length):
+    """
+    Shows graph and path that was made by algorithm to find exit. Matplotlib version.
+    """
+
     fig, ax = plt.subplots()
     plt.subplots_adjust(left=0.08, top=0.92, bottom=0.08, right=0.75, wspace=0.075, hspace=0.075)
     plt.axis([0, maze_length, 0, maze_length])
@@ -125,7 +141,6 @@ def show_graph(graph, maze_length, open):
         plt.scatter(x, y, c='k', marker='s', s=45)
         plt.pause(0.0001)
     plt.show()
-
 
 def possible_routes(graph, input_maze):
     """
@@ -167,11 +182,12 @@ def find_path(path):
     print("Points possible to visit:", n_0)
     print("Visited {}% of all points.".format(str(percentage)))
 
+    show_maze_path(path, graph)
+
     updated_maze = possible_routes(graph, maze)
     nodes = find_nodes(graph)
     print("Nodes to be evaluated:", nodes)
-    show_graph(graph, len(maze), closed)
-
+    #show_graph(graph, len(maze))
 
 path = 'mazes/maze1.png'
 find_path(path)
