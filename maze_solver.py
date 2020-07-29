@@ -62,7 +62,7 @@ def open_points(position, open, closed, maze, start):
 
 def find_nodes(graph):
     """
-    Finds nodes (crossings), points where there is possibility to go in different directions. For future purpose.
+    Finds nodes of paths, i.e. dead ends and crossings of path.
     """
     moves = np.array([[0, 1], [0, -1], [1, 0], [-1, 0]])
     nodes = []
@@ -76,6 +76,10 @@ def find_nodes(graph):
                 step += 1
         if step > 2:
             nodes.append(point)
+        elif step == 1:
+            nodes.append(point)
+        else:
+            pass
 
     return nodes
 
@@ -153,6 +157,10 @@ def possible_routes(graph, input_maze):
 
     return updated_maze
 
+def final_path(nodes, graph):
+
+
+
 def find_path(path):
     """
     Actual function used to find end, combination of above functions.
@@ -181,12 +189,10 @@ def find_path(path):
     print("Evaluated points:", len(graph))
     print("Points possible to visit:", n_0)
     print("Visited {}% of all points.".format(str(percentage)))
-
-    show_maze_path(path, graph)
-
     updated_maze = possible_routes(graph, maze)
     nodes = find_nodes(graph)
     print("Nodes to be evaluated:", nodes)
+    show_maze_path(path, graph)
     #show_graph(graph, len(maze))
 
 path = 'mazes/maze1.png'
