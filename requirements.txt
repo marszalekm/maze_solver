@@ -1,3 +1,2 @@
 cv2==4.2.0
 numpy==1.18.2
-matplotlib==3.0.3
