@@ -2,7 +2,9 @@
 
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
+import copy
+import time
+
 
 def convert_to_array(path_to_maze):
     """
@@ -12,6 +14,7 @@ def convert_to_array(path_to_maze):
     maze_reverted = cv2.bitwise_not(initial_maze)
     maze = maze_reverted / 255.0
     return maze
+
 
 def find_in_and_out(maze):
     """
@@ -45,6 +48,7 @@ def find_in_and_out(maze):
 
     return start, end
 
+
 def open_points(position, open, closed, maze, start):
     """
     Updates possible and potential points to visit.
@@ -55,33 +59,12 @@ def open_points(position, open, closed, maze, start):
     for i in range(len(neighbours)):
         x = int(neighbours[i][0])
         y = int(neighbours[i][1])
-        if ((any(neighbours[i]) > 0) == True and maze[y][x] == 0 and tuple(neighbours[i]) not in closed.keys()) or neighbours[i] == start:
-            open.update({tuple(neighbours[i]) : []})
+        if ((any(neighbours[i]) > 0) == True and maze[y][x] == 0 and tuple(neighbours[i]) not in closed.keys()) or \
+                neighbours[i] == start:
+            open.update({tuple(neighbours[i]): []})
 
     return open
 
-def find_nodes(graph):
-    """
-    Finds nodes of paths, i.e. dead ends and crossings of path.
-    """
-    moves = np.array([[0, 1], [0, -1], [1, 0], [-1, 0]])
-    nodes = []
-    distances = {}
-
-    for point in graph:
-        neighbours = (moves + point).tolist()
-        step = 0
-        for n in neighbours:
-            if n in graph:
-                step += 1
-        if step > 2:
-            nodes.append(point)
-        elif step == 1:
-            nodes.append(point)
-        else:
-            pass
-
-    return nodes
 
 def calculate_distance(dictionary, start, end):
     """
@@ -93,30 +76,20 @@ def calculate_distance(dictionary, start, end):
 
     return dictionary
 
+
 def lowest_dist(dictionary):
     """
     Chooses point with lowest distance to end.
     """
     return min(dictionary.keys(), key=(lambda point: dictionary[point]))
 
-def corridor_points(maze):
-    """
-    Maximum number of points possible to visit (not walls).
-    Just to estimate in what extent the maze was evaluated to find exit.
-    """
-    n_0 = 0
-    for x in maze:
-        n_0 = list(x).count(0) + n_0
-
-    return n_0
 
 def show_maze_path(path, solution):
     """
-    Shows maze and path that was made by algorithm to find exit. CV2 version.
+    Shows maze and path that was made by algorithm to find exit.
     """
-
     cv2.namedWindow('solution', cv2.WINDOW_NORMAL)
-    cv2.resizeWindow('solution', 500, 500)
+    cv2.resizeWindow('solution', 1000, 1000)
     maze = cv2.imread(path, 0)
     for point in solution:
         point.reverse()
@@ -126,39 +99,36 @@ def show_maze_path(path, solution):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-def show_graph(graph, maze_length):
+
+def final_path(ppath, maze):
     """
-    Shows graph and path that was made by algorithm to find exit. Matplotlib version.
+    Generates the shortest way to the exit, knowing the preliminary path.
     """
+    tmaze = np.full((len(maze), len(maze[0])), 1) # temporary maze
+    fpath = copy.deepcopy(ppath)  # final path
+    moves = np.array([[0, 1], [0, -1], [1, 0], [-1, 0]])
 
-    fig, ax = plt.subplots()
-    plt.subplots_adjust(left=0.08, top=0.92, bottom=0.08, right=0.75, wspace=0.075, hspace=0.075)
-    plt.axis([0, maze_length, 0, maze_length])
-    ax.xaxis.tick_top()
-    plt.gca().invert_yaxis()
-    ax.spines['left'].set_position(('axes', 0))
-    ax.spines['bottom'].set_position(('axes', 0))
-    for point in graph:
-        #print("Position: ", point)
-        point = np.array(point)
-        x, y = point.T
-        plt.scatter(x, y, c='k', marker='s', s=45)
-        plt.pause(0.0001)
-    plt.show()
+    for point in ppath:
+        tmaze[point[1]][point[0]] = 0
 
-def possible_routes(graph, input_maze):
-    """
-    All points evaluated by algorithm, with proper path.
-    """
-    updated_maze = np.full((len(input_maze), len(input_maze[0])), 1)
+    flag = 1
+    while flag != 0:
+        flag = 0
+        for point in fpath[1:-1]:
+            # loop checks if point is a dead end
+            neighbours = (moves + point).tolist()
+            deadend = 0
+            for n in neighbours:
+                if tmaze[n[1]][n[0]] == 1:
+                    deadend += 1
+            if deadend == 3:
+                tmaze[point[1]][point[0]] = 1
+                fpath.remove(point)
+                flag += 1
+            else:
+                pass
 
-    for point in graph:
-        updated_maze[point[1]][point[0]] = 0
-
-    return updated_maze
-
-def final_path(nodes, graph):
-
+    return fpath, tmaze
 
 
 def find_path(path):
@@ -170,9 +140,9 @@ def find_path(path):
 
     open = {}  # points to be evaluated
     closed = {}  # points already evaluated
-    graph = [] # points for creating visualization
+    ppath = []  # points for creating visualization (preliminary path)
     position = start
-    graph.append(list(position))
+    ppath.append(list(position))
 
     while position != tuple(end):
         open = open_points(position, open, closed, maze, start)
@@ -180,20 +150,15 @@ def find_path(path):
         lowd = lowest_dist(open)
         if lowd not in closed.keys() and position != tuple(end):
             position = lowd
-            closed.update({position : open[position]})
+            closed.update({position: open[position]})
             del open[position]
-            graph.append(list(position))
+            ppath.append(list(position))
 
-    n_0 = corridor_points(maze)
-    percentage = round((len(graph)/n_0 * 100), 2)
-    print("Evaluated points:", len(graph))
-    print("Points possible to visit:", n_0)
-    print("Visited {}% of all points.".format(str(percentage)))
-    updated_maze = possible_routes(graph, maze)
-    nodes = find_nodes(graph)
-    print("Nodes to be evaluated:", nodes)
-    show_maze_path(path, graph)
-    #show_graph(graph, len(maze))
+    start = time.time()
+    fpath, tmaze = final_path(ppath, maze)
+    print('It took {:.5f} seconds to calculate the path.'.format(time.time() - start))
+    show_maze_path(path, fpath)
 
-path = 'mazes/maze1.png'
+
+path = 'mazes/maze5.png'
 find_path(path)
