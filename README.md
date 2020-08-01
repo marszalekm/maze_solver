@@ -1,5 +1,4 @@
 # maze_solver
-Script that finds a way from a maze.
 
 Algorithm finds a way out of the maze. Maze is provided as a black & white image with 1 pixel wall thickness and corridors.
 It is based on very basic idea, that doesn't include any sophisticated method or algorithm for finding a shortest paths etc.
