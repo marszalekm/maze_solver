@@ -12,5 +12,5 @@ General workflow:
 6. Now dead ends are removed, just by checking all of the points from AE list.
 7. Final path is shonw on the screen.
 
-Done mostly for the purpose of self-development and fun. 
+Done mostly for the purpose of self-development and fun.                      
 It would be interesting to compare performance of this script with some real life algorithm e.g. A*.
