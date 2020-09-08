@@ -12,7 +12,6 @@ General workflow:
 * Now dead ends are removed, just by checking all of the points from AE list.
 * Final path is shown on the screen.
 
-In order to run the algorithm define path to particular maze as an argument i.e.  ``` ./maze_solver.py mazes/maze1.png```
-
+In order to run the algorithm define path to particular maze as an argument i.e. <br/>``` ./maze_solver.py mazes/maze1.png```
 
 *Done mostly for the purpose of self-development and fun.*
