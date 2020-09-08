@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import copy
 import time
+import sys
 
 
 def convert_to_array(path_to_maze):
@@ -59,14 +60,15 @@ def open_points(position, open, closed, maze, start):
     for i in range(len(neighbours)):
         x = int(neighbours[i][0])
         y = int(neighbours[i][1])
-        if ((any(neighbours[i]) > 0) == True and maze[y][x] == 0 and tuple(neighbours[i]) not in closed.keys()) or \
-                neighbours[i] == start:
+        if ((any(neighbours[i]) > 0) is True
+            and maze[y][x] == 0
+            and tuple(neighbours[i]) not in closed.keys()) or neighbours[i] == start:
             open.update({tuple(neighbours[i]): []})
 
     return open
 
 
-def calculate_distance(dictionary, start, end):
+def calculate_distance(dictionary, end):
     """
     Calculates and updates distances to end of points in dictionary (open points).
     """
@@ -95,7 +97,7 @@ def show_maze_path(path, solution):
         point.reverse()
         maze[point[0]][point[1]] = 175
         cv2.imshow('solution', maze)
-        cv2.waitKey(25)
+        cv2.waitKey(1)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
@@ -104,7 +106,7 @@ def final_path(ppath, maze):
     """
     Generates the shortest way to the exit, knowing the preliminary path.
     """
-    tmaze = np.full((len(maze), len(maze[0])), 1) # temporary maze
+    tmaze = np.full((len(maze), len(maze[0])), 1)  # temporary maze
     fpath = copy.deepcopy(ppath)  # final path
     moves = np.array([[0, 1], [0, -1], [1, 0], [-1, 0]])
 
@@ -118,8 +120,8 @@ def final_path(ppath, maze):
             # loop checks if point is a dead end
             neighbours = (moves + point).tolist()
             deadend = 0
-            for n in neighbours:
-                if tmaze[n[1]][n[0]] == 1:
+            for i in neighbours:
+                if tmaze[i[1]][i[0]] == 1:
                     deadend += 1
             if deadend == 3:
                 tmaze[point[1]][point[0]] = 1
@@ -128,7 +130,7 @@ def final_path(ppath, maze):
             else:
                 pass
 
-    return fpath, tmaze
+    return fpath
 
 
 def find_path(path):
@@ -146,7 +148,7 @@ def find_path(path):
 
     while position != tuple(end):
         open = open_points(position, open, closed, maze, start)
-        open = calculate_distance(open, start, end)
+        open = calculate_distance(open, end)
         lowd = lowest_dist(open)
         if lowd not in closed.keys() and position != tuple(end):
             position = lowd
@@ -155,10 +157,9 @@ def find_path(path):
             ppath.append(list(position))
 
     start = time.time()
-    fpath, tmaze = final_path(ppath, maze)
-    print('It took {:.5f} seconds to calculate the path.'.format(time.time() - start))
+    fpath = final_path(ppath, maze)
+    print(f'It took {time.time() - start:.5f} seconds to calculate the path.')
     show_maze_path(path, fpath)
 
 
-path = 'mazes/maze5.png'
-find_path(path)
+find_path(sys.argv[1])
