@@ -12,4 +12,4 @@ General workflow:
 * Now dead ends are removed, just by checking all of the points from AE list.
 * Final path is shown on the screen.
 
-***Done mostly for the purpose of self-development and fun.***
+*Done mostly for the purpose of self-development and fun.*
