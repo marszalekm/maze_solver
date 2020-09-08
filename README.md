@@ -1,7 +1,7 @@
 # Maze solver
 
 Algorithm finds a way out of the maze. Maze is provided as a black & white image with 1 pixel wall thickness and corridors.<br/>
-It is based on an idea used in A* algorithm, where distance to the exit is calculated for each cell.
+It is based on an idea used in A* algorithm, where distance to the exit is calculated for each considered cell.
 
 General workflow:
 * Algorithm establishes start and end. Image is converted to an array. 
