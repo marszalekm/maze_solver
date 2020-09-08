@@ -1,7 +1,7 @@
 # maze_solver
 
 Algorithm finds a way out of the maze. Maze is provided as a black & white image with 1 pixel wall thickness and corridors.
-It is based on a very basic idea, that doesn't include any sophisticated method or algorithm for finding a shortest paths etc.
+It is based on a idea used in A* algorithm where distance to the exit is calculated for each cell.
 
 General workflow:
 1. Algorithm establishes start and end. Image is converted to an array. 
@@ -12,5 +12,4 @@ General workflow:
 6. Now dead ends are removed, just by checking all of the points from AE list.
 7. Final path is shown on the screen.
 
-Done mostly for the purpose of self-development and fun.                      
-It would be interesting to compare performance of this script with some real life algorithm e.g. A*.
+Done mostly for the purpose of self-development and fun.
