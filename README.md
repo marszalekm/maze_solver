@@ -5,9 +5,9 @@ It is based on an idea used in A* algorithm - distance to the exit is calculated
 
 General workflow:
 * Algorithm establishes start and end. Image is converted to an array. 
-* Loop starts and it checks possible point for the next move.
+* Loop starts and it checks possible point/s for the next move.
 * All points are stored in 2 lists: already evaluated (AE) and to-be-evaluated points (TBE). 
-* For each of TBE points Euclidean distance to the exit is calculated and the one with lowest is chosen.
+* For each of TBE points Euclidean distance to the exit is calculated and the one with lowest value is chosen.
 * When it finally reaches an exit, the list of AE points is again evaluated and applied on the maze structure.
 * Now dead ends are removed, just by checking all of the points from AE list.
 * Final path is shown on the screen.
